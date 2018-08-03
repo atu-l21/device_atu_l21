@@ -1,0 +1,48 @@
+type mksu_daemon, domain;
+type mksu_exec, exec_type, file_type;
+
+typeattribute mksu_daemon coredomain;
+permissive mksu_daemon;
+
+tmpfs_domain(mksu_daemon);
+domain_auto_trans(init, mksu_exec, mksu_daemon);
+file_type_auto_trans(mksu_daemon, device, mksu_daemon);
+
+allow { appdomain shell } mksu_daemon:unix_stream_socket { connectto write read };
+allow { appdomain shell } mksu_daemon:sock_file { write read };
+allow { appdomain shell } mksu_exec:file { getattr read open execute execute_no_trans };
+
+create_pty(shell)
+allowxperm shell devpts:chr_file ioctl TCSETSF;
+allowxperm untrusted_app untrusted_app_devpts:chr_file ioctl TCSETSF;
+
+allow servicemanager mksu_daemon:dir { search read };
+allow servicemanager mksu_daemon:file { open read };
+allow servicemanager mksu_daemon:process { getattr };
+allow servicemanager mksu_daemon:binder { call transfer };
+
+typeattribute mksu_daemon mlstrustedobject;
+typeattribute mksu_daemon mlstrustedsubject;
+
+allow shell su_exec:file getattr;
+typeattribute su mlstrustedsubject;
+
+allow mksu_daemon { system_api_service app_api_service system_server_service }:service_manager find;
+
+allow system_server mksu_daemon:fifo_file { read write };
+allow system_server mksu_daemon:fd use;
+allow system_server mksu_daemon:binder { call transfer };
+allow system_server shell_devpts:chr_file { read write };
+
+# Add su to various domains
+net_domain(mksu_daemon)
+
+hwbinder_use(mksu_daemon)
+
+allow mksu_daemon toolbox_exec:file { read open execute_no_trans };
+allow mksu_daemon untrusted_app_devpts:chr_file { getattr };
+allow mksu_daemon zygote_exec:file { execute read open execute_no_trans getattr };
+
+allow mksu_daemon mksu_daemon:capability { setuid setgid dac_override chown};
+
+allow appdomain mksu_daemon:dir { search };

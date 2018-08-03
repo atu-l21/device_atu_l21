@@ -1,0 +1,2 @@
+service sudaemon /system/bin/mk-su --daemon
+    class main
